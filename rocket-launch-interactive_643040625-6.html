@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rocket Launch Simulator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #1a1a2e, #16213e);
+      color: white;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      color: #00b4d8;
+    }
+
+    .rocket-container {
+      position: relative;
+      height: 400px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .rocket {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      transition: bottom 3s ease-in;
+      width: 60px;
+      height: 120px;
+      z-index: 10;
+    }
+
+    .rocket-body {
+      width: 30px;
+      height: 80px;
+      background-color: #e63946;
+      border-radius: 50% 50% 0 0;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .rocket-window {
+      width: 12px;
+      height: 12px;
+      background-color: #a8dadc;
+      border-radius: 50%;
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .rocket-fins {
+      position: absolute;
+      bottom: 0;
+      width: 60px;
+      height: 20px;
+    }
+
+    .fin {
+      position: absolute;
+      bottom: 0;
+      width: 15px;
+      height: 30px;
+      background-color: #e63946;
+    }
+
+    .fin.left {
+      left: 0;
+      transform: skew(30deg);
+    }
+
+    .fin.right {
+      right: 0;
+      transform: skew(-30deg);
+    }
+
+    .rocket-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 10px;
+      background-color: #457b9d;
+    }
+
+    .flame {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 30px;
+      background: linear-gradient(to top, #fcbf49, #f77f00, transparent);
+      border-radius: 50% 50% 0 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .stars {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background-color: white;
+      border-radius: 50%;
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 50px;
+      background-color: #6d6875;
+      border-radius: 50% 50% 0 0;
+    }
+
+    .launch-pad {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 10px;
+      background-color: #457b9d;
+    }
+
+    .controls {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-start {
+      background-color: #06d6a0;
+      color: #1a1a2e;
+    }
+
+    .btn-reset {
+      background-color: #ef476f;
+      color: white;
+    }
+
+    .btn-action {
+      background-color: #118ab2;
+      color: white;
+      width: 120px;
+    }
+
+    .countdown {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      min-height: 36px;
+    }
+
+    .stage-info {
+      margin-bottom: 20px;
+      font-size: 18px;
+      color: #a8dadc;
+    }
+
+    .fuel-gauge {
+      width: 200px;
+      height: 20px;
+      border: 2px solid #a8dadc;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .fuel-level {
+      height: 100%;
+      width: 0%;
+      background-color: #06d6a0;
+      transition: width 0.5s;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 18px;
+      min-height: 27px;
+    }
+
+    .rocket-size-selector {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .rocket-size-btn {
+      background-color: #118ab2;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .rocket-size-btn.selected {
+      background-color: #06d6a0;
+    }
+
+    .check-window {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(22, 33, 62, 0.9);
+      border: 2px solid #00b4d8;
+      border-radius: 10px;
+      padding: 20px;
+      width: 300px;
+      z-index: 100;
+      display: none;
+    }
+
+    .check-window h2 {
+      margin-top: 0;
+      color: #00b4d8;
+    }
+
+    .check-window-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .instruction-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .instruction-content {
+      background-color: #16213e;
+      border-radius: 10px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 30px;
+      position: relative;
+      color: white;
+      line-height: 1.6;
+    }
+
+    .instruction-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .instruction-content h2 {
+      color: #00b4d8;
+      border-bottom: 2px solid #00b4d8;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .instruction-content ul {
+      padding-left: 20px;
+    }
+
+    .instruction-btn {
+      background-color: #06d6a0;
+      color: #1a1a2e;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        width: 90%;
+      }
+
+      .rocket-size-selector {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 150;
+    }
+
+    .loading-container {
+      background-color: #16213e;
+      padding: 30px;
+      border-radius: 10px;
+      width: 400px;
+      max-width: 90%;
+    }
+
+    .loading-progress {
+      width: 100%;
+      height: 10px;
+      background-color: #1a1a2e;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .loading-progress-bar {
+      width: 0;
+      height: 100%;
+      background-color: #06d6a0;
+      transition: width 0.5s ease-in-out;
+    }
+
+    .detailed-checks {
+      margin-top: 10px;
+      font-size: 0.8em;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity 0.5s ease, max-height 0.5s ease;
+    }
+
+    .check-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      color: #a8dadc;
+    }
+
+    .check-name {
+      flex-grow: 1;
+    }
+
+    .check-value {
+      font-weight: bold;
+      color: #06d6a0;
+      margin: 0 10px;
+    }
+
+    .check-target {
+      opacity: 0.7;
+    }
+
+    .contextual-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .central-status-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(22, 33, 62, 0.7);
+      border: 2px solid #00b4d8;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      z-index: 50;
+      transition: all 0.3s ease;
+      max-width: 80%;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .central-status-display.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .central-status-display-primary {
+      font-size: 2.5rem;
+      color: #06d6a0;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .central-status-display-secondary {
+      font-size: 1.5rem;
+      color: #a8dadc;
+    }
+
+    .mission-success-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .mission-success-container {
+      background-color: #16213e;
+      border: 3px solid #00b4d8;
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+      position: relative;
+      box-shadow: 0 0 30px rgba(0, 180, 216, 0.5);
+    }
+
+    .mission-success-header h1 {
+      color: #06d6a0;
+      margin-bottom: 20px;
+      font-size: 2.5rem;
+    }
+
+    .mission-success-details {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 30px;
+    }
+
+    .mission-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-label {
+      color: #a8dadc;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      color: #00b4d8;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .mission-success-actions {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .firework {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      border-radius: 50%;
+      opacity: 0;
+      animation: firework 2s ease-out infinite;
+    }
+
+    @keyframes firework {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        transform: scale(20);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Rocket Launch Simulator</h1>
+
+    <div class="rocket-size-selector">
+      <button class="rocket-size-btn" data-size="small">Small Rocket</button>
+      <button class="rocket-size-btn selected" data-size="medium">Medium Rocket</button>
+      <button class="rocket-size-btn" data-size="large">Large Rocket</button>
+    </div>
+
+    <div class="stage-info" id="stage-info">Complete all pre-launch checks</div>
+
+    <div class="rocket-container">
+      <div class="stars" id="stars"></div>
+      <div class="ground"></div>
+      <div class="launch-pad"></div>
+      <div class="rocket" id="rocket">
+        <div class="rocket-body"></div>
+        <div class="rocket-window"></div>
+        <div class="rocket-fins">
+          <div class="fin left"></div>
+          <div class="fin right"></div>
+        </div>
+        <div class="rocket-bottom"></div>
+        <div class="flame" id="flame"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="fuel-gauge">
+        <div class="fuel-level" id="fuel-level"></div>
+      </div>
+      <div>Fuel Level: <span id="fuel-percentage">0</span>%</div>
+
+      <div class="countdown" id="countdown"></div>
+
+      <div class="control-panel">
+        <button class="btn-action" id="btn-fuel">Load Fuel</button>
+        <button class="btn-action" id="btn-systems">Check Systems</button>
+        <button class="btn-action" id="btn-weather">Check Weather</button>
+        <button class="btn-start" id="btn-launch" disabled>Launch Rocket</button>
+      </div>
+
+      <button class="btn-reset" id="btn-reset">Reset Simulation</button>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div id="central-status-display" class="central-status-display">
+      <div class="central-status-display-primary" id="central-status-primary"></div>
+      <div class="central-status-display-secondary" id="central-status-secondary"></div>
+    </div>
+  </div>
+
+  <div id="systems-check-window" class="check-window">
+    <button class="check-window-close">&times;</button>
+    <h2>Systems Check Details</h2>
+    <div id="systems-check-details"></div>
+  </div>
+
+  <div id="weather-check-window" class="check-window">
+    <button class="check-window-close">&times;</button>
+    <h2>Weather Check Details</h2>
+    <div id="weather-check-details"></div>
+  </div>
+
+  <div id="instruction-modal" class="instruction-modal" style="display: none;">
+    <div class="instruction-content">
+      <button id="instruction-close" class="instruction-close">&times;</button>
+      <h2>Rocket Launch Simulator - Instructions</h2>
+
+      <h3>Mission Objective</h3>
+      <p>Your goal is to successfully launch a rocket by completing all pre-launch checks and managing fuel efficiently.</p>
+
+      <h3>Game Steps</h3>
+      <ol>
+        <li><strong>Select Rocket Size</strong>
+          <ul>
+            <li>Choose between Small, Medium, and Large rockets</li>
+            <li>Each rocket size has different fuel capacity and launch characteristics</li>
+          </ul>
+        </li>
+
+        <li><strong>Load Fuel</strong>
+          <ul>
+            <li>Click "Load Fuel" button to fill the rocket's fuel tank</li>
+            <li>Different rocket sizes have different maximum fuel capacities</li>
+            <li>The fuel gauge shows your current fuel level</li>
+          </ul>
+        </li>
+
+        <li><strong>Systems Check</strong>
+          <ul>
+            <li>Click "Check Systems" to verify rocket's operational status</li>
+            <li>A detailed window will pop up showing system diagnostics</li>
+          </ul>
+        </li>
+
+        <li><strong>Weather Check</strong>
+          <ul>
+            <li>Click "Check Weather" to ensure safe launch conditions</li>
+            <li>A detailed window will show current weather parameters</li>
+          </ul>
+        </li>
+
+        <li><strong>Launch Rocket</strong>
+          <ul>
+            <li>Once all checks are complete, the "Launch Rocket" button will be enabled</li>
+            <li>A 5-second countdown will begin</li>
+            <li>Watch your rocket launch and track its altitude</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3>Tips</h3>
+      <ul>
+        <li>Manage fuel carefully - different rocket sizes consume fuel at different rates</li>
+        <li>Complete all pre-launch checks before attempting to launch</li>
+        <li>You can reset the simulation at any time using the "Reset Simulation" button</li>
+      </ul>
+
+      <button id="instruction-start-btn" class="instruction-btn">Let's Launch!</button>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      fuel: 0,
+      systemsChecked: false,
+      weatherChecked: false,
+      launched: false,
+      inCountdown: false,
+      altitude: 0
+    };
+
+    const rocketSizes = {
+      small: {
+        maxFuel: 80,
+        fuelLoadRate: 15,
+        fuelConsumptionRate: 4,
+        launchHeight: 80
+      },
+      medium: {
+        maxFuel: 100,
+        fuelLoadRate: 20,
+        fuelConsumptionRate: 5,
+        launchHeight: 100
+      },
+      large: {
+        maxFuel: 120,
+        fuelLoadRate: 25,
+        fuelConsumptionRate: 6,
+        launchHeight: 120
+      }
+    };
+
+    const rocketEl = document.getElementById('rocket');
+    const flameEl = document.getElementById('flame');
+    const fuelLevelEl = document.getElementById('fuel-level');
+    const fuelPercentageEl = document.getElementById('fuel-percentage');
+    const countdownEl = document.getElementById('countdown');
+    const stageInfoEl = document.getElementById('stage-info');
+    const statusEl = document.getElementById('status');
+
+    const btnFuel = document.getElementById('btn-fuel');
+    const btnSystems = document.getElementById('btn-systems');
+    const btnWeather = document.getElementById('btn-weather');
+    const btnLaunch = document.getElementById('btn-launch');
+    const btnReset = document.getElementById('btn-reset');
+
+    const starsEl = document.getElementById('stars');
+
+    let selectedRocketSize = 'medium';
+
+    function createStars() {
+      for (let i = 0; i < 100; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.width = `${Math.random() * 3 + 1}px`;
+        star.style.height = star.style.width;
+        star.style.opacity = Math.random() * 0.8 + 0.2;
+        starsEl.appendChild(star);
+      }
+    }
+    createStars();
+
+    const centralStatusDisplay = document.getElementById('central-status-display');
+    const centralStatusPrimary = document.getElementById('central-status-primary');
+    const centralStatusSecondary = document.getElementById('central-status-secondary');
+
+    function showCentralStatus(primary, secondary = '', duration = 3000) {
+      centralStatusPrimary.textContent = primary;
+      centralStatusSecondary.textContent = secondary;
+
+      centralStatusDisplay.classList.add('active');
+
+      if (duration > 0) {
+        setTimeout(() => {
+          centralStatusDisplay.classList.remove('active');
+        }, duration);
+      }
+    }
+
+    function loadFuel() {
+      const rocketConfig = rocketSizes[selectedRocketSize];
+
+      if (state.fuel < rocketConfig.maxFuel) {
+        state.fuel += rocketConfig.fuelLoadRate;
+        if (state.fuel > rocketConfig.maxFuel) state.fuel = rocketConfig.maxFuel;
+
+        updateFuelDisplay();
+        checkLaunchReadiness();
+
+        if (state.fuel === rocketConfig.maxFuel) {
+          showCentralStatus('Fuel Tanks Full', 'Ready for next step', 3000);
+          btnFuel.disabled = true;
+        } else {
+          showCentralStatus('Fueling', `${state.fuel}% loaded`, 2000);
+        }
+      }
+    }
+
+    function checkSystems() {
+      btnSystems.disabled = true;
+      createLoadingOverlay('systems');
+      playSoundEffect('systemCheck');
+      showContextualHint('systems');
+    }
+
+    function checkWeather() {
+      btnWeather.disabled = true;
+      createLoadingOverlay('weather');
+      showContextualHint('weather');
+    }
+
+    function checkLaunchReadiness() {
+      const rocketConfig = rocketSizes[selectedRocketSize];
+
+      if (state.fuel >= rocketConfig.maxFuel && state.systemsChecked && state.weatherChecked) {
+        btnLaunch.disabled = false;
+        stageInfoEl.textContent = 'Ready for launch!';
+      } else {
+        const remaining = [];
+        if (state.fuel < rocketConfig.maxFuel) remaining.push('fuel loading');
+        if (!state.systemsChecked) remaining.push('systems check');
+        if (!state.weatherChecked) remaining.push('weather check');
+
+        stageInfoEl.textContent = `Pending: ${remaining.join(', ')}`;
+      }
+    }
+
+    function launchRocket() {
+      const rocketConfig = rocketSizes[selectedRocketSize];
+
+      state.launched = true;
+      state.inCountdown = false;
+
+      flameEl.style.opacity = '1';
+      rocketEl.style.bottom = `${rocketConfig.launchHeight}%`;
+
+      const fuelConsumptionInterval = setInterval(() => {
+        state.fuel -= rocketConfig.fuelConsumptionRate;
+        if (state.fuel <= 0) {
+          state.fuel = 0;
+          clearInterval(fuelConsumptionInterval);
+          flameEl.style.opacity = '0';
+        }
+        updateFuelDisplay();
+      }, 150);
+
+      const altitudeInterval = setInterval(() => {
+        state.altitude += 10;
+        stageInfoEl.textContent = `Altitude: ${state.altitude} km`;
+
+        if (state.altitude >= 200) {
+          clearInterval(altitudeInterval);
+          createMissionSuccessOverlay(state.altitude);
+        }
+      }, 300);
+    }
+
+    function startLaunch() {
+      if (state.inCountdown || state.launched) return;
+
+      state.inCountdown = true;
+      btnLaunch.disabled = true;
+      btnFuel.disabled = true;
+      btnSystems.disabled = true;
+      btnWeather.disabled = true;
+
+      let countdown = 5;
+
+      showCentralStatus('Launch Sequence Initiated', 'Preparing for liftoff', 0);
+      countdownEl.textContent = countdown;
+
+      const countdownInterval = setInterval(() => {
+        countdown--;
+
+        if (countdown > 0) {
+          showCentralStatus(`Countdown: ${countdown}`, 'Systems preparing', 0);
+        }
+
+        countdownEl.textContent = countdown;
+
+        if (countdown <= 0) {
+          clearInterval(countdownInterval);
+          showCentralStatus('LIFTOFF!', 'Rocket is ascending', 3000);
+          launchRocket();
+        }
+      }, 1000);
+    }
+
+    function updateFuelDisplay() {
+      fuelLevelEl.style.width = `${state.fuel}%`;
+      fuelPercentageEl.textContent = state.fuel;
+    }
+
+    function resetSimulation() {
+      const rocketConfig = rocketSizes[selectedRocketSize];
+
+      state.fuel = 0;
+      state.systemsChecked = false;
+      state.weatherChecked = false;
+      state.launched = false;
+      state.inCountdown = false;
+      state.altitude = 0;
+
+      rocketEl.style.bottom = '0';
+      flameEl.style.opacity = '0';
+      updateFuelDisplay();
+      countdownEl.textContent = '';
+      stageInfoEl.textContent = 'Complete all pre-launch checks';
+      statusEl.textContent = '';
+
+      btnFuel.disabled = false;
+      btnSystems.disabled = false;
+      btnWeather.disabled = false;
+      btnLaunch.disabled = true;
+
+      document.querySelectorAll('.check-window').forEach(window => {
+        window.style.display = 'none';
+      });
+
+      showCentralStatus('Simulation Reset', 'Ready to start a new launch', 3000);
+    }
+
+    const rocketSizeBtns = document.querySelectorAll('.rocket-size-btn');
+    rocketSizeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        rocketSizeBtns.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedRocketSize = btn.dataset.size;
+        resetSimulation();
+      });
+    });
+
+    function showCheckWindow(type) {
+      const windowEl = document.getElementById(`${type}-check-window`);
+      const detailsEl = document.getElementById(`${type}-check-details`);
+
+      if (type === 'systems') {
+        detailsEl.innerHTML = `
+          <p>Checking rocket systems...</p>
+          <ul>
+            <li>Guidance System: ✓ Operational</li>
+            <li>Communication Systems: ✓ Active</li>
+            <li>Structural Integrity: ✓ Confirmed</li>
+            <li>Electrical Systems: ✓ Functioning</li>
+          </ul>
+        `;
+      } else if (type === 'weather') {
+        detailsEl.innerHTML = `
+          <p>Analyzing weather conditions...</p>
+          <ul>
+            <li>Wind Speed: 5 km/h ✓</li>
+            <li>Temperature: 22°C ✓</li>
+            <li>Visibility: Excellent ✓</li>
+            <li>Precipitation: None ✓</li>
+          </ul>
+        `;
+      }
+
+      windowEl.style.display = 'block';
+    }
+
+    document.querySelectorAll('.check-window-close').forEach(closeBtn => {
+      closeBtn.addEventListener('click', (e) => {
+        e.target.closest('.check-window').style.display = 'none';
+      });
+    });
+
+    const instructionModal = document.getElementById('instruction-modal');
+    const instructionCloseBtn = document.getElementById('instruction-close');
+    const instructionStartBtn = document.getElementById('instruction-start-btn');
+
+    function showInstructions() {
+      instructionModal.style.display = 'flex';
+    }
+
+    function hideInstructions() {
+      instructionModal.style.display = 'none';
+    }
+
+    instructionCloseBtn.addEventListener('click', hideInstructions);
+    instructionStartBtn.addEventListener('click', hideInstructions);
+
+    const instructionButton = document.createElement('button');
+    instructionButton.textContent = '❓ Instructions';
+    instructionButton.classList.add('btn-action');
+    instructionButton.style.position = 'absolute';
+    instructionButton.style.top = '20px';
+    instructionButton.style.right = '20px';
+    instructionButton.addEventListener('click', showInstructions);
+
+    document.querySelector('.container').appendChild(instructionButton);
+
+    btnFuel.addEventListener('click', loadFuel);
+    btnSystems.addEventListener('click', checkSystems);
+    btnWeather.addEventListener('click', checkWeather);
+    btnLaunch.addEventListener('click', startLaunch);
+    btnReset.addEventListener('click', resetSimulation);
+
+    window.addEventListener('load', showInstructions);
+
+    updateFuelDisplay();
+
+    function createLoadingOverlay(type) {
+      const loadingOverlay = document.createElement('div');
+      loadingOverlay.classList.add('loading-overlay');
+
+      const loadingContainer = document.createElement('div');
+      loadingContainer.classList.add('loading-container');
+
+      const stages = type === 'systems'
+        ? [
+            {
+              name: 'Guidance System',
+              key: 'guidance',
+              checks: [
+                { name: 'Navigation Calibration', value: '±0.02°', target: '±0.05°' },
+                { name: 'Gyroscope Alignment', value: '99.98%', target: '99.95%' }
+              ]
+            },
+            {
+              name: 'Communication Systems',
+              key: 'communication',
+              checks: [
+                { name: 'Signal Strength', value: '-62 dBm', target: '>-65 dBm' },
+                { name: 'Frequency Stability', value: '±0.001 Hz', target: '±0.005 Hz' }
+              ]
+            },
+            {
+              name: 'Structural Integrity',
+              key: 'structural',
+              checks: [
+                { name: 'Material Stress Test', value: '98.5 MPa', target: '<100 MPa' },
+                { name: 'Thermal Resistance', value: '250°C', target: '>200°C' }
+              ]
+            },
+            {
+              name: 'Electrical Systems',
+              key: 'electrical',
+              checks: [
+                { name: 'Battery Voltage', value: '28.2V', target: '28-29V' },
+                { name: 'Current Stability', value: '±0.05A', target: '±0.1A' }
+              ]
+            }
+          ]
+        : [
+            {
+              name: 'Wind Speed Check',
+              key: 'wind',
+              checks: [
+                { name: 'Ground Level Wind', value: '4.2 m/s', target: '<5 m/s' },
+                { name: 'Upper Atmosphere Wind', value: '12 m/s', target: '<15 m/s' }
+              ]
+            },
+            {
+              name: 'Temperature Analysis',
+              key: 'temperature',
+              checks: [
+                { name: 'Ground Temperature', value: '22.5°C', target: '15-25°C' },
+                { name: 'Launch Pad Temperature', value: '24°C', target: '20-30°C' }
+              ]
+            },
+            {
+              name: 'Visibility Assessment',
+              key: 'visibility',
+              checks: [
+                { name: 'Horizontal Visibility', value: '10 km', target: '>8 km' },
+                { name: 'Cloud Cover', value: '15%', target: '<20%' }
+              ]
+            },
+            {
+              name: 'Precipitation Evaluation',
+              key: 'precipitation',
+              checks: [
+                { name: 'Rainfall Probability', value: '0%', target: '0%' },
+                { name: 'Humidity', value: '45%', target: '40-50%' }
+              ]
+            }
+          ];
+
+      const stagesContainer = document.createElement('div');
+      stagesContainer.classList.add('check-stages');
+
+      stages.forEach((stage, index) => {
+        const stageElement = document.createElement('div');
+        stageElement.classList.add('check-stage');
+        stageElement.dataset.stage = stage.key;
+
+        const stageIcon = document.createElement('div');
+        stageIcon.classList.add('stage-icon', 'pending');
+        stageIcon.textContent = index + 1;
+
+        const stageDetails = document.createElement('div');
+        stageDetails.classList.add('stage-details');
+
+        const stageName = document.createElement('div');
+        stageName.classList.add('stage-name');
+        stageName.textContent = stage.name;
+
+        const stageStatus = document.createElement('div');
+        stageStatus.classList.add('stage-status');
+        stageStatus.textContent = 'Pending';
+
+        const detailedChecks = document.createElement('div');
+        detailedChecks.classList.add('detailed-checks');
+        stage.checks.forEach(check => {
+          const checkElement = document.createElement('div');
+          checkElement.classList.add('check-item');
+          checkElement.innerHTML = `
+            <span class="check-name">${check.name}</span>
+            <span class="check-value">${check.value}</span>
+            <span class="check-target">(Target: ${check.target})</span>
+          `;
+          detailedChecks.appendChild(checkElement);
+        });
+
+        stageDetails.appendChild(stageName);
+        stageDetails.appendChild(stageStatus);
+        stageDetails.appendChild(detailedChecks);
+
+        stageElement.appendChild(stageIcon);
+        stageElement.appendChild(stageDetails);
+
+        stagesContainer.appendChild(stageElement);
+      });
+
+      const progressContainer = document.createElement('div');
+      progressContainer.classList.add('loading-progress');
+      const progressBar = document.createElement('div');
+      progressBar.classList.add('loading-progress-bar');
+      progressContainer.appendChild(progressBar);
+
+      loadingContainer.appendChild(stagesContainer);
+      loadingContainer.appendChild(progressContainer);
+      loadingOverlay.appendChild(loadingContainer);
+
+      document.body.appendChild(loadingOverlay);
+
+      animateLoading(type, loadingOverlay, progressBar, stagesContainer);
+    }
+
+    function animateLoading(type, overlay, progressBar, stagesContainer) {
+      let progress = 0;
+      const totalTime = 8000; // Increased from 4000 to 8000 milliseconds (8 seconds)
+      const interval = 40;
+      const increment = (interval / totalTime) * 100;
+      const stages = stagesContainer.querySelectorAll('.check-stage');
+
+      const progressInterval = setInterval(() => {
+        progress += increment;
+        progressBar.style.width = `${Math.min(progress, 100)}%`;
+
+        const currentStageIndex = Math.floor((progress / 100) * stages.length);
+
+        stages.forEach((stage, index) => {
+          const icon = stage.querySelector('.stage-icon');
+          const status = stage.querySelector('.stage-status');
+          const detailedChecks = stage.querySelector('.detailed-checks');
+
+          // Add a slow fade-in effect for detailed checks
+          if (index === currentStageIndex) {
+            setTimeout(() => {
+              detailedChecks.style.opacity = '1';
+              detailedChecks.style.maxHeight = '200px'; // Adjust as needed
+            }, index * 1000); // Stagger the reveal
+          }
+
+          if (index < currentStageIndex) {
+            stage.classList.remove('current');
+            stage.classList.add('completed');
+            icon.classList.remove('in-progress', 'pending');
+            icon.classList.add('completed');
+            status.textContent = 'Completed';
+          } else if (index === currentStageIndex) {
+            stage.classList.add('current');
+            icon.classList.remove('pending');
+            icon.classList.add('in-progress');
+            status.textContent = 'In Progress';
+          }
+        });
+
+        if (progress >= 100) {
+          clearInterval(progressInterval);
+
+          setTimeout(() => {
+            overlay.remove();
+
+            if (type === 'systems') {
+              state.systemsChecked = true;
+              statusEl.textContent = 'All systems operational!';
+              showCheckWindow('systems');
+            } else {
+              state.weatherChecked = true;
+              statusEl.textContent = 'Weather conditions are favorable for launch!';
+              showCheckWindow('weather');
+            }
+
+            checkLaunchReadiness();
+          }, 500);
+        }
+      }, interval);
+    }
+
+    // Enhanced button interaction
+    function enhanceButtonInteractivity() {
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(button => {
+        button.addEventListener('mouseenter', () => {
+          button.style.transform = 'scale(1.05)';
+          // Optional: Add tooltip
+          createTooltip(button);
+        });
+
+        button.addEventListener('mouseleave', () => {
+          button.style.transform = 'scale(1)';
+          removeTooltip();
+        });
+      });
+    }
+
+    // Sound effect manager
+    const soundEffects = {
+      fuelLoad: new Audio('fuel-load.mp3'),
+      systemCheck: new Audio('system-check.mp3'),
+      launch: new Audio('rocket-launch.mp3')
+    };
+
+    function playSoundEffect(effectName) {
+      if (soundEffects[effectName]) {
+        soundEffects[effectName].play();
+      }
+    }
+
+    // Contextual hints system
+    function showContextualHint(stage) {
+      const hintContainer = document.createElement('div');
+      hintContainer.classList.add('contextual-hint');
+
+      const hints = {
+        'fuel': 'Tip: Load fuel carefully. Each rocket size has different capacity.',
+        'systems': 'Ensure all system checks are green before proceeding.',
+        'weather': 'Weather conditions can make or break a launch.'
+      };
+
+      hintContainer.textContent = hints[stage] || '';
+      document.body.appendChild(hintContainer);
+
+      setTimeout(() => {
+        hintContainer.remove();
+      }, 3000);
+    }
+
+    function createMissionSuccessOverlay(altitude) {
+      const overlay = document.createElement('div');
+      overlay.classList.add('mission-success-overlay');
+      overlay.innerHTML = `
+        <div class="mission-success-container">
+          <div class="mission-success-header">
+            <h1>Mission Accomplished!</h1>
+          </div>
+          <div class="mission-success-details">
+            <div class="mission-stat">
+              <span class="stat-label">Final Altitude</span>
+              <span class="stat-value">${altitude} km</span>
+            </div>
+            <div class="mission-stat">
+              <span class="stat-label">Rocket Size</span>
+              <span class="stat-value">${selectedRocketSize.charAt(0).toUpperCase() + selectedRocketSize.slice(1)} Rocket</span>
+            </div>
+            <div class="mission-stat">
+              <span class="stat-label">Fuel Efficiency</span>
+              <span class="stat-value">${calculateFuelEfficiency()}%</span>
+            </div>
+          </div>
+          <div class="mission-success-actions">
+            <button id="mission-replay-btn" class="btn-action">Replay Mission</button>
+            <button id="mission-new-rocket-btn" class="btn-action">New Rocket</button>
+          </div>
+        </div>
+      `;
+
+      // Add fireworks effect
+      createFireworksEffect(overlay);
+
+      document.body.appendChild(overlay);
+
+      // Add event listeners to buttons
+      document.getElementById('mission-replay-btn').addEventListener('click', () => {
+        overlay.remove();
+        resetSimulation();
+      });
+
+      document.getElementById('mission-new-rocket-btn').addEventListener('click', () => {
+        overlay.remove();
+        resetSimulation();
+        // Optional: Open rocket size selector
+        document.querySelector('.rocket-size-selector').scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    function calculateFuelEfficiency() {
+      const rocketConfig = rocketSizes[selectedRocketSize];
+      const initialFuel = rocketConfig.maxFuel;
+      const remainingFuel = state.fuel;
+      const efficiency = ((initialFuel - remainingFuel) / initialFuel * 100).toFixed(2);
+      return efficiency;
+    }
+
+    function createFireworksEffect(container) {
+      for (let i = 0; i < 20; i++) {
+        const firework = document.createElement('div');
+        firework.classList.add('firework');
+        firework.style.left = `${Math.random() * 100}%`;
+        firework.style.top = `${Math.random() * 100}%`;
+        firework.style.animationDelay = `${Math.random() * 2}s`;
+        container.appendChild(firework);
+      }
+    }
+
+    enhanceButtonInteractivity();
+  </script>
+</body>
+</html>
